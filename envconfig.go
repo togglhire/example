@@ -120,11 +120,9 @@ func Process(spec interface{}) error {
 
 	for _, info := range infos {
 
-		var value string
-
-		def := info.Tags.Get("example")
-		if def != "" {
-			value = def
+		value := info.Tags.Get("example")
+		if value == "" {
+			continue
 		}
 
 		err = processField(value, info.Field)
