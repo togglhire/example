@@ -55,7 +55,11 @@ func TestDefaults(t *testing.T) {
 	}
 	a := SomeStruct{}
 
-	Process(&a)
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
 	prettyPrint(a)
 }
 
@@ -68,7 +72,11 @@ func TestDefaultsWithSliceStructs(t *testing.T) {
 	}
 	a := SomeStruct{}
 
-	Process(&a)
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
 	prettyPrint(a)
 }
 
@@ -81,7 +89,11 @@ func TestDefaultsWithStructs(t *testing.T) {
 	}
 	a := SomeStruct{}
 
-	Process(&a)
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
 	prettyPrint(a)
 }
 
@@ -92,4 +104,23 @@ func prettyPrint(i interface{}) {
 
 func TestGetLen(t *testing.T) {
 	log.Printf(`getLen("len=1"): %#+v\n`, getLen("len=1"))
+}
+
+func TestExampleEmpty(t *testing.T) {
+	type AnotherStruct struct {
+		Name string
+		ID   int64 `json:"id"`
+	}
+	type SomeStruct struct {
+		ID            int64 `json:"id"`
+		AnotherStruct AnotherStruct
+	}
+	a := SomeStruct{}
+
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	prettyPrint(a)
 }
