@@ -4,7 +4,6 @@ import (
 	"encoding"
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"strconv"
 	"strings"
@@ -60,12 +59,10 @@ func gatherInfo(spec interface{}) ([]varInfo, error) {
 	s := reflect.ValueOf(spec)
 
 	if s.Kind() != reflect.Ptr {
-		log.Println("első: s.Kind() != reflect.Ptr sérült")
 		return nil, ErrInvalidSpecification
 	}
 	s = s.Elem()
 	if s.Kind() != reflect.Struct {
-		log.Println("második: s.Kind() != reflect.Struct sérült")
 		return nil, ErrInvalidSpecification
 	}
 	typeOfSpec := s.Type()
