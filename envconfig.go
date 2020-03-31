@@ -68,6 +68,17 @@ func gatherInfo(spec interface{}) ([]varInfo, error) {
 		s.Set(vp)
 		return gatherInfo(vp.Interface())
 	}
+	if s.Kind() == reflect.Slice || s.Kind() == reflect.Array {
+		infos := []varInfo{}
+		for i := 0; i < s.Len(); i++ {
+			info, err := gatherInfo(s.Index(i).Addr().Interface())
+			if err != nil {
+				return nil, err
+			}
+			infos = append(infos, info...)
+		}
+		return infos, nil
+	}
 	if s.Kind() != reflect.Struct {
 		return nil, ErrInvalidSpecification
 	}
