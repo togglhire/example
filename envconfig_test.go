@@ -158,6 +158,36 @@ func Test_InterfaceHolder(t *testing.T) {
 	prettyPrint(a)
 }
 
+func Test_InterfaceHolder_withSlice(t *testing.T) {
+	a := interfaceHolder{
+		Interface: interfaceHolder{
+			Interface: []interfaceHolder{
+				interfaceHolder{
+					Interface: someStruct{},
+				},
+				interfaceHolder{
+					Interface: interfaceHolder{
+						Interface: interfaceHolder{
+							Interface: interfaceHolder{
+								Interface: []someStruct{
+									someStruct{},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	prettyPrint(a)
+}
+
 func Test_InterfaceHolder_1(t *testing.T) {
 	a := interfaceHolder{
 		Interface: someStruct{},
@@ -186,7 +216,7 @@ func Test_InterfaceHolder_2(t *testing.T) {
 
 func TestArray(t *testing.T) {
 	var a struct {
-		Array [100]someStruct
+		Array [10]someStruct
 	}
 	err := Process(&a)
 	if err != nil {
@@ -205,6 +235,26 @@ func TestNoTags(t *testing.T) {
 		AnotherStruct AnotherStruct
 	}
 	a := SomeStruct{}
+
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	prettyPrint(a)
+}
+
+func TestSlice(t *testing.T) {
+	type AnotherStruct struct {
+		Name string `example:"name"`
+		ID   int    `example:"200"`
+	}
+	type SomeStruct struct {
+		AnotherStruct AnotherStruct
+	}
+	a := []SomeStruct{
+		SomeStruct{},
+	}
 
 	err := Process(&a)
 	if err != nil {
