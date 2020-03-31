@@ -124,3 +124,92 @@ func TestExampleEmpty(t *testing.T) {
 	}
 	prettyPrint(a)
 }
+
+type interfaceHolder struct {
+	Interface interface{}
+}
+
+type someStruct struct {
+	Name string `example:"name"`
+}
+
+func Test_InterfaceHolder(t *testing.T) {
+	a := interfaceHolder{
+		Interface: interfaceHolder{
+			Interface: interfaceHolder{
+				Interface: interfaceHolder{
+					Interface: interfaceHolder{
+						Interface: interfaceHolder{
+							Interface: interfaceHolder{
+								Interface: someStruct{},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	prettyPrint(a)
+}
+
+func Test_InterfaceHolder_1(t *testing.T) {
+	a := interfaceHolder{
+		Interface: someStruct{},
+	}
+
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	prettyPrint(a)
+}
+
+func Test_InterfaceHolder_2(t *testing.T) {
+	a := interfaceHolder{
+		Interface: someStruct{},
+	}
+
+	err := Process(&a.Interface)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	prettyPrint(a)
+}
+
+func TestArray(t *testing.T) {
+	var a struct {
+		Array [100]someStruct
+	}
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	prettyPrint(a)
+}
+
+func TestNoTags(t *testing.T) {
+	type AnotherStruct struct {
+		Name string
+		ID   int
+	}
+	type SomeStruct struct {
+		AnotherStruct AnotherStruct
+	}
+	a := SomeStruct{}
+
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	prettyPrint(a)
+}
