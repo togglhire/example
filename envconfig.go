@@ -58,10 +58,16 @@ func getLen(value string) int {
 func gatherInfo(spec interface{}) ([]varInfo, error) {
 	s := reflect.ValueOf(spec)
 
-	if s.Kind() != reflect.Ptr {
+	if s.Kind() != reflect.Ptr && s.Kind() != reflect.Interface {
 		return nil, ErrInvalidSpecification
 	}
 	s = s.Elem()
+	if s.Kind() == reflect.Interface {
+		vp := reflect.New(reflect.TypeOf(s.Interface()))
+		vp.Elem().Set(reflect.ValueOf(s.Interface()))
+		s.Set(vp)
+		return gatherInfo(vp.Interface())
+	}
 	if s.Kind() != reflect.Struct {
 		return nil, ErrInvalidSpecification
 	}
@@ -72,7 +78,7 @@ func gatherInfo(spec interface{}) ([]varInfo, error) {
 	for i := 0; i < s.NumField(); i++ {
 		f := s.Field(i)
 		ftype := typeOfSpec.Field(i)
-		if !f.CanSet() || isTrue(ftype.Tag.Get("ignored")) {
+		if !f.CanSet() {
 			continue
 		}
 
@@ -120,8 +126,15 @@ func Process(spec interface{}) error {
 
 	for _, info := range infos {
 
+		if info.Field.Type().Kind() == reflect.Interface {
+			err := Process(info.Field.Addr().Interface())
+			if err != nil {
+				return err
+			}
+		}
+
 		value := info.Tags.Get("example")
-		if value == "" {
+		if value == "" && info.Field.Kind() != reflect.Array {
 			continue
 		}
 
@@ -223,6 +236,13 @@ func processField(value string, field reflect.Value) error {
 			}
 		}
 		field.Set(sl)
+	case reflect.Array:
+		for i := 0; i < field.Len(); i++ {
+			err := Process(field.Index(i).Addr().Interface())
+			if err != nil {
+				return err
+			}
+		}
 	case reflect.Map:
 		// TODO
 		mp := reflect.MakeMap(typ)
@@ -281,10 +301,5 @@ func textUnmarshaler(field reflect.Value) (t encoding.TextUnmarshaler) {
 
 func binaryUnmarshaler(field reflect.Value) (b encoding.BinaryUnmarshaler) {
 	interfaceFrom(field, func(v interface{}, ok *bool) { b, *ok = v.(encoding.BinaryUnmarshaler) })
-	return b
-}
-
-func isTrue(s string) bool {
-	b, _ := strconv.ParseBool(s)
 	return b
 }
