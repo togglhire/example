@@ -162,15 +162,15 @@ func Test_InterfaceHolder_withSlice(t *testing.T) {
 	a := interfaceHolder{
 		Interface: interfaceHolder{
 			Interface: []interfaceHolder{
-				interfaceHolder{
+				{
 					Interface: someStruct{},
 				},
-				interfaceHolder{
+				{
 					Interface: interfaceHolder{
 						Interface: interfaceHolder{
 							Interface: interfaceHolder{
 								Interface: []someStruct{
-									someStruct{},
+									{},
 								},
 							},
 						},
@@ -253,8 +253,25 @@ func TestSlice(t *testing.T) {
 		AnotherStruct AnotherStruct
 	}
 	a := []SomeStruct{
-		SomeStruct{},
+		{},
 	}
+
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	prettyPrint(a)
+}
+
+func Test_IntArray(t *testing.T) {
+	type SomeStruct struct {
+		Numbers  [5]int    `example:"2,3,5,6"`
+		Strings  []string  `example:"john,doe"`
+		UNumbers [3]uint16 `example:"4,6"`
+		Bools    []bool    `example:"true,false"`
+	}
+	a := SomeStruct{}
 
 	err := Process(&a)
 	if err != nil {

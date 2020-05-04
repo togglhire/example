@@ -54,6 +54,11 @@ func getLen(value string) int {
 	return val
 }
 
+func getLenPrimitive(value string) int {
+	split := strings.Split(value, ",")
+	return len(split)
+}
+
 // GatherInfo gathers information about the specified struct
 func gatherInfo(spec interface{}) ([]varInfo, error) {
 	s := reflect.ValueOf(spec)
@@ -79,6 +84,16 @@ func gatherInfo(spec interface{}) ([]varInfo, error) {
 		}
 		return infos, nil
 	}
+
+	if isPrimitive(s.Kind()) {
+		return []varInfo{
+			{
+				Name:  s.Type().Name(),
+				Field: s,
+			},
+		}, nil
+	}
+
 	if s.Kind() != reflect.Struct {
 		return nil, ErrInvalidSpecification
 	}
@@ -163,6 +178,18 @@ func Process(spec interface{}) error {
 	return err
 }
 
+func isPrimitive(k reflect.Kind) bool {
+	switch k {
+	case reflect.String,
+		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Bool:
+		return true
+	default:
+		return false
+	}
+}
+
 // MustProcess is the same as Process but panics if an error occurs
 func MustProcess(spec interface{}) {
 	if err := Process(spec); err != nil {
@@ -239,19 +266,42 @@ func processField(value string, field reflect.Value) error {
 		field.SetFloat(val)
 	case reflect.Slice:
 		len := getLen(value)
+		primitive := isPrimitive(typ.Elem().Kind())
+		split := strings.Split(value, ",")
+		if primitive {
+			len = getLenPrimitive(value)
+		}
 		sl := reflect.MakeSlice(typ, len, len)
 		for i := 0; i < sl.Len(); i++ {
-			err := Process(sl.Index(i).Addr().Interface())
-			if err != nil {
-				return err
+			if !primitive {
+				err := Process(sl.Index(i).Addr().Interface())
+				if err != nil {
+					return err
+				}
+			} else {
+				err := processField(split[i], sl.Index(i).Addr().Elem())
+				if err != nil {
+					return err
+				}
 			}
 		}
 		field.Set(sl)
 	case reflect.Array:
+		primitive := isPrimitive(typ.Elem().Kind())
+		split := strings.Split(value, ",")
 		for i := 0; i < field.Len(); i++ {
-			err := Process(field.Index(i).Addr().Interface())
-			if err != nil {
-				return err
+			if !primitive {
+				err := Process(field.Index(i).Addr().Interface())
+				if err != nil {
+					return err
+				}
+			} else {
+				if i < (len(split)) {
+					err := processField(split[i], field.Index(i).Addr().Elem())
+					if err != nil {
+						return err
+					}
+				}
 			}
 		}
 	case reflect.Map:
