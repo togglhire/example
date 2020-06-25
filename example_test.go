@@ -280,3 +280,18 @@ func Test_IntArray(t *testing.T) {
 	}
 	prettyPrint(a)
 }
+
+func Test_FloatArray(t *testing.T) {
+	type SomeStruct struct {
+		Float64 [5]float64 `example:"2.1,3,5,6.1"`
+		Float32 []float32  `example:"4.3,6"`
+	}
+	a := SomeStruct{}
+
+	err := Process(&a)
+	if err != nil {
+		t.Error(err.Error())
+		return
+	}
+	prettyPrint(a)
+}
